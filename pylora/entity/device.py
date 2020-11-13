@@ -19,14 +19,16 @@ along with PyLora. If not, see <http://www.gnu.org/licenses/>.
 class Device:
     CONFIGURATION_FIELDS = ("dev_addr", "dev_eui", "app_eui", "app_key", "net_session_key", "app_session_key", "name")
 
-    def __init__(self,
-                 dev_addr=None,
-                 dev_eui=None,
-                 app_eui=None,
-                 app_key=None,
-                 net_session_key=None,
-                 app_session_key=None,
-                 name=None):
+    def __init__(
+        self,
+        dev_addr=None,
+        dev_eui=None,
+        app_eui=None,
+        app_key=None,
+        net_session_key=None,
+        app_session_key=None,
+        name=None,
+    ):
         self.dev_addr = dev_addr
         self.dev_eui = dev_eui
         self.app_eui = app_eui

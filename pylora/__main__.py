@@ -17,17 +17,31 @@ along with PyLora. If not, see <http://www.gnu.org/licenses/>.
 
 import asyncio
 import logging
+from argparse import ArgumentParser
+from os.path import join, dirname
 
-from .application import LoraNetworkServer
+from .server import LoraNetworkServer
+
+DEFAULT_CONFIG = join(dirname(__file__), "..", "conf", "netserver.json")
 
 
-def start_network_server():
-    loop = asyncio.get_event_loop()
-    logger = logging.getLogger('LoRaWAN')
+def parse_arguments():
+    parser = ArgumentParser()
+    parser.add_argument("--config", help="JSON configuration", type=str, default=DEFAULT_CONFIG)
+    parser.add_argument("-p", "--port", help="UDP listening port", type=int, default=5678)
+    args = parser.parse_args()
+    return args.port, args.config
+
+
+def run_network_server(port: int, config_path: str):
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger("pylora")
     logger.info("Starting UDP server")
 
+    loop = asyncio.get_event_loop()
+
     # One protocol instance will be created to serve all client requests
-    listen = loop.create_datagram_endpoint(lambda: LoraNetworkServer(), local_addr=('127.0.0.1', 9999))
+    listen = loop.create_datagram_endpoint(lambda: LoraNetworkServer(config_path, logger), local_addr=("0.0.0.0", port))
     transport, protocol = loop.run_until_complete(listen)
 
     try:
@@ -37,7 +51,13 @@ def start_network_server():
 
     transport.close()
     loop.close()
+    logger.warning("Done")
+
+
+def main():
+    port, config_path = parse_arguments()
+    run_network_server(port, config_path)
 
 
 if __name__ == "__main__":
-    start_network_server()
+    main()

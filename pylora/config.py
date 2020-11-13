@@ -14,23 +14,27 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with PyLora. If not, see <http://www.gnu.org/licenses/>.
 """
+import json
+from dataclasses import dataclass
+from typing import List
 
-import array
-import struct
-
-from cryptography.hazmat.primitives.ciphers.algorithms import AES
-
-
-def key_string_to_bytes(key_string):
-    num = int(key_string, 16)
-    return struct.pack(">QQ", num >> 64, num & 0xFFFFFFFFFFFFFFFF)
+import dacite
 
 
-def compute_encryption_vector(data_length, address, counter):
-    vector = bytes(0)
-    for i in range(data_length / AES.block_size):
-        vector += struct.pack("<BLBLLBB", 0x01, 0x00, 0x00, address, counter, 0, i + 1)
+@dataclass
+class DeviceConfig:
+    name: str
+    net_session_key: str
+    app_session_key: str
+    app_key: str
 
 
-def xor_bytes(first, second):
-    return [data_block ^ s_block for data_block, s_block in zip(array.array("B", first), array.array("B", second))]
+@dataclass
+class Config:
+    devices: List[DeviceConfig]
+
+
+def load_config_from_path(path) -> Config:
+    with open(path, "r") as f:
+        data = json.load(f)
+    return dacite.from_dict(data_class=Config, data=data)

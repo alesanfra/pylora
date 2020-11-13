@@ -15,27 +15,23 @@ You should have received a copy of the GNU General Public License
 along with PyLora. If not, see <http://www.gnu.org/licenses/>.
 """
 
-import logging
-
+from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import cmac
 from cryptography.hazmat.primitives.ciphers import algorithms
 
 
-def prova_cmac(key):
+def cmac_sign(message: bytes, key: bytes) -> bytes:
     c = cmac.CMAC(algorithms.AES(key), backend=default_backend())
-    c.update(b"message to authenticate")
-    h = c.finalize()
-    print(h)
+    c.update(message)
+    return c.finalize()
 
+
+def cmac_verify(message: bytes, key: bytes, signature: bytes) -> bool:
     c = cmac.CMAC(algorithms.AES(key), backend=default_backend())
-    c.update(b"message to authenticate")
-    # c.verify(h)
-    c.verify(b"an incorrect signature")
-
-
-prova_cmac(b'01020304050607080910111213141516')
-
-logger = logging.getLogger()
-
-logger.warning('ciao')
+    c.update(message)
+    try:
+        c.verify(signature)
+        return True
+    except InvalidSignature:
+        return False

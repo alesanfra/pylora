@@ -16,13 +16,15 @@ along with PyLora. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import struct
+from dataclasses import dataclass
+from enum import IntEnum, unique
 
 GWMP_MESSAGE_FORMAT = ">BHB"
 GATEWAY_ADDRESS_FORMAT = ">Q"
 
 
-class GWMPMessage:
-    # GWMP message types
+@unique
+class GwmpMessageType(IntEnum):
     PUSH_DATA = 0x00
     PUSH_ACK = 0x01
     PULL_DATA = 0x02
@@ -30,22 +32,33 @@ class GWMPMessage:
     PULL_RESP = 0x03
     TX_ACK = 0x05
 
-    def __init__(self, version, token, type, gateway, payload):
-        self.version = version
-        self.token = token
-        self.type = type
-        self.gateway = gateway
-        self.payload = payload
+    @classmethod
+    def downstream(cls):
+        """Messages from Network Server to Gateway"""
+        return {cls.PUSH_ACK, cls.PULL_RESP, cls.PULL_ACK}
+
+    def upstream(cls):
+        """Messages from Gateway to Network Server"""
+        return set(list(cls)) - cls.downstream()
+
+
+@dataclass
+class GwmpMessage:
+    version: int
+    token: int
+    type: GwmpMessageType
+    gateway: str
+    payload: str
 
     @classmethod
     def from_gateway_message(cls, data):
         """Build GWMP message"""
         size = struct.calcsize(GWMP_MESSAGE_FORMAT)
         version, token, gwmp_type = struct.unpack(GWMP_MESSAGE_FORMAT, data[:size])
-        if gwmp_type in (cls.TX_ACK, cls.PULL_RESP, cls.PULL_ACK):
+        if gwmp_type in GwmpMessageType.downstream():
             gateway = 0
         else:
-            gateway = struct.unpack(GATEWAY_ADDRESS_FORMAT, data[size:size + 8])[0]
+            gateway = struct.unpack(GATEWAY_ADDRESS_FORMAT, data[size: size + 8])[0]
         payload = data[size + 8:]
         return cls(version, token, gwmp_type, gateway, payload)
 

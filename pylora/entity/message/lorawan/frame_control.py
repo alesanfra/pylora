@@ -14,14 +14,15 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with PyLora. If not, see <http://www.gnu.org/licenses/>.
 """
+from dataclasses import dataclass
 
 
+@dataclass
 class FrameControl:
-    def __init__(self, adr=False, adr_ack_req=False, ack=False, options_length=0):
-        self.adr = adr
-        self.adr_ack_req = adr_ack_req
-        self.ack = ack
-        self.options_len = options_length
+    adr: bool = False
+    adr_ack_req: bool = False
+    ack: bool = False
+    options_length: int = 0
 
     @classmethod
     def deserialize(cls, frame_ctrl):
@@ -31,6 +32,6 @@ class FrameControl:
             ack = bool(frame_ctrl & 0b00100000)
             options_length = frame_ctrl & 0b00000111
         except Exception:
-            raise TypeError('corrupted frame control field')
+            raise TypeError("Corrupted frame control field")
 
         return cls(adr, adr_ack_req, ack, options_length)

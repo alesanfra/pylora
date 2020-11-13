@@ -48,13 +48,13 @@ class LorawanMessage:
     @classmethod
     def __deserialize_mac_layer(cls, data):
         data = str(data)
-        data += b'=' * (4 - len(data) % 4)  # add padding to be multiple of 4
+        data += b"=" * (4 - len(data) % 4)  # add padding to be multiple of 4
         res = base64.urlsafe_b64decode(data)
         mac_header = ord(res[0])
         type = (mac_header & 0b11100000) >> 5
         lorawan_version = mac_header & 0b00000011
-        payload = res[1:len(res) - 4]
-        mic = res[len(res) - 4:]
+        payload = res[1 : len(res) - 4]
+        mic = res[len(res) - 4 :]
         return type, lorawan_version, payload, mic
 
     @classmethod

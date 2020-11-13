@@ -26,21 +26,25 @@ from pylora.entity.message.lorawan import LorawanMessage, FrameControl
 from pylora.util import key_string_to_bytes, compute_encryption_vector, xor_bytes
 
 
-@LorawanMessage.implements(LorawanMessage.UNCONFIRMED_DATA_UP,
-                           LorawanMessage.UNCONFIRMED_DATA_DOWN,
-                           LorawanMessage.CONFIRMED_DATA_UP,
-                           LorawanMessage.CONFIRMED_DATA_DOWN)
+@LorawanMessage.implements(
+    LorawanMessage.UNCONFIRMED_DATA_UP,
+    LorawanMessage.UNCONFIRMED_DATA_DOWN,
+    LorawanMessage.CONFIRMED_DATA_UP,
+    LorawanMessage.CONFIRMED_DATA_DOWN,
+)
 class LorawanDataMessage(LorawanMessage):
-    def __init__(self,
-                 lorawan_type=None,
-                 version=None,
-                 mic=None,
-                 address=None,
-                 counter=None,
-                 control=None,
-                 options=None,
-                 port=None,
-                 payload=None):
+    def __init__(
+        self,
+        lorawan_type=None,
+        version=None,
+        mic=None,
+        address=None,
+        counter=None,
+        control=None,
+        options=None,
+        port=None,
+        payload=None,
+    ):
         super().__init__(lorawan_type, version, mic)
         self.address: str = address
         self.counter: int = counter
@@ -53,11 +57,11 @@ class LorawanDataMessage(LorawanMessage):
     def deserialize_frame_layer(cls, lorawan_type, version, data, mic):
         dev_address, frame_ctrl, frame_cnt = struct.unpack("<LBH", data[:7])
         frame_ctrl = FrameControl.deserialize(frame_ctrl)
-        options = data[7:frame_ctrl.options_len] if frame_ctrl.options_len > 0 else ""
+        options = data[7 : frame_ctrl.options_len] if frame_ctrl.options_len > 0 else ""
 
-        if len(data[7 + frame_ctrl.options_len:]) > 0:
+        if len(data[7 + frame_ctrl.options_len :]) > 0:
             port = ord(data[7 + frame_ctrl.options_len])
-            payload = data[8 + frame_ctrl.options_len:]
+            payload = data[8 + frame_ctrl.options_len :]
         else:
             port = -1
             payload = ""

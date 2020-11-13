@@ -16,51 +16,50 @@ along with PyLora. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import json
+from asyncio import DatagramTransport
+from logging import Logger
+from typing import List
 
-from pylora.entity.message.gwmp import GWMPMessage
+from pylora.config import DeviceConfig
+from pylora.entity.message.gwmp import GwmpMessage, GwmpMessageType
 from pylora.entity.message.lorawan import LorawanMessage
 from pylora.entity.message.lorawan.data import LorawanDataMessage
 
-BUFF_LEN = 2408
-
-gateways = {}
-
 
 class GatewayMessageHandler:
-    def __init__(self, log, transport, devices):
-        self.log = log
-        self.transport = transport
-        self.devices = devices
+    def __init__(self, logger: Logger, devices: List[DeviceConfig]):
+        self.logger: Logger = logger
+        self.devices: List[DeviceConfig] = devices
+        self.gateways = {}
 
-    def __call__(self, message, gateway_address):
-        gm = GWMPMessage.from_gateway_message(message)
+    def __call__(self, transport: DatagramTransport, message, gateway_address):
+        gm = GwmpMessage.from_gateway_message(message)
 
-        if gm.type == GWMPMessage.PUSH_DATA:
-            self.log.info("PUSH_DATA received")
-            self.transport.sendto(gm.get_ack(), gateway_address)  # send PUSH_ACK
+        if gm.type == GwmpMessageType.PUSH_DATA:
+            self.logger.info("PUSH_DATA received")
+            transport.sendto(gm.get_ack(), gateway_address)  # send PUSH_ACK
             payload = json.loads(gm.payload)
 
             for message in payload.get("rxpk", []):
-                lorawan_message = LorawanMessage.deserialize(message['data'])
+                lorawan_message = LorawanMessage.deserialize(message["data"])
 
                 if isinstance(lorawan_message, LorawanDataMessage):
                     self.handle_lorawan_message(lorawan_message)
                 else:
                     raise TypeError("LoRaWAN message type unknown")
 
-        elif gm.type == GWMPMessage.PULL_DATA:
-            self.log.info("PULL_DATA received")
-            self.transport.sendto(gm.get_ack(), gateway_address)  # send PULL_ACK
-            global gateways
-            gateways[gm.gateway] = self.transport  # save address for PULL_RESP
+        elif gm.type == GwmpMessageType.PULL_DATA:
+            self.logger.info("PULL_DATA received")
+            transport.sendto(gm.get_ack(), gateway_address)  # send PULL_ACK
+            self.gateways[gm.gateway] = gateway_address  # save address for PULL_RESP
 
-        elif gm.type == GWMPMessage.TX_ACK:
-            self.log.info("TX_ACK received")
+        elif gm.type == GwmpMessageType.TX_ACK:
+            self.logger.info("TX_ACK received")
         else:
             raise TypeError("GWMP message type unknown")
 
     def handle_lorawan_message(self, lorawan_message):
-        self.log.info("Handle message {}".format(lorawan_message.payload))
+        self.logger.info("Handle message {}".format(lorawan_message.payload))
         # elif mm.type == MacMessage.UNCONFIRMED_DATA_UP:
         # print
         # "Message type: UNCONFIRMED DATA UP"
