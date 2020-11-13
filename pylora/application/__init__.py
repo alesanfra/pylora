@@ -17,10 +17,11 @@ along with PyLora. If not, see <http://www.gnu.org/licenses/>.
 
 import json
 import logging
+from pathlib import Path
 
-from pylora.handler.gateway import GatewayMessageHandler
+from ..handler.gateway import GatewayMessageHandler
 
-CONFIGURATION_FILE = "../conf/netserver.json"
+CONFIGURATION_FILE = Path(__file__).parent / '..' / '..' / 'conf' / 'netserver.json'
 
 
 class LoraNetworkServer:

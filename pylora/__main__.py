@@ -18,7 +18,7 @@ along with PyLora. If not, see <http://www.gnu.org/licenses/>.
 import asyncio
 import logging
 
-from pylora.application import LoraNetworkServer
+from .application import LoraNetworkServer
 
 
 def start_network_server():
@@ -27,7 +27,7 @@ def start_network_server():
     logger.info("Starting UDP server")
 
     # One protocol instance will be created to serve all client requests
-    listen = loop.create_datagram_endpoint(LoraNetworkServer, local_addr=('127.0.0.1', 9999))
+    listen = loop.create_datagram_endpoint(lambda: LoraNetworkServer(), local_addr=('127.0.0.1', 9999))
     transport, protocol = loop.run_until_complete(listen)
 
     try:
